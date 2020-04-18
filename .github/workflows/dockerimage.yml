@@ -1,0 +1,48 @@
+name: Fail2Web Docker Image
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+  watch:
+    types: [started]
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+  DOCKER_REGISTRY_URL: docker.io
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/docker-fail2web
+
+  PLATFORM: linux/arm/v7
+  DOCKER_CACHE_TAG: _cache
+  CACHE_VERSION: v2
+  BUILDX_VERSION: v0.3.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.actor == github.event.repository.owner.login
+    steps:
+      - name: Set up Docker Buildx ${{ env.BUILDX_VERSION }}
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: ${{ env.BUILDX_VERSION }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        
+      - name: Buildx the Docker image
+        run: |
+          flag=$(date +%s)
+          echo "*** Imagen a crear ${DOCKER_REGISTRY_URL}/${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:${flag}"
+          
+          echo "*** Login de ${{ env.DOCKER_USERNAME }} en ${{ env.DOCKER_REGISTRY_URL }}"
+          echo "${{ env.DOCKER_PASSWORD }}" | docker login ${{ env.DOCKER_REGISTRY_URL }} -u ${{ env.DOCKER_USERNAME }} --password-stdin
+          
+          echo "*** Construimos la imagen ${{ env.DOCKER_REGISTRY_URL }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
+          sudo docker buildx build . \
+            --platform ${{ env.PLATFORM }} \
+            --file Dockerfile \
+            --cache-to=type=inline \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:latest \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:${flag} \
+            --output=type=registry
