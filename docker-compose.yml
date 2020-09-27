@@ -2,7 +2,7 @@ version: 2
 
 services:
   fail2web:
-    image: monogramm/docker-fail2web
+    image: ridgarou/docker-fail2web
     container_name: fail2web
     restart: always
     ports:
@@ -17,7 +17,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
 
   fail2rest:
-    image: monogramm/docker-fail2rest
+    image: ridgarou/docker-fail2rest
     container_name: fail2rest
     restart: always
     ports:
